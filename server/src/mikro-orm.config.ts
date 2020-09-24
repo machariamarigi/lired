@@ -1,9 +1,13 @@
+import path from 'path';
 import { MikroORM } from "@mikro-orm/core";
-
 import { __prod__ } from "./constants";
 import { Post } from "./entities/Post";
 
-export default {  
+export default {
+    migrations: {
+        path: path.join(__dirname, "./migrations"),
+        pattern: /^[\w-]+\d+\.ts$/,
+    },
     dbName: 'lired',
     type: 'postgresql',
     entities: [Post],
