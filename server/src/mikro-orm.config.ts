@@ -2,6 +2,7 @@ import path from 'path';
 import { MikroORM } from "@mikro-orm/core";
 import { __prod__ } from "./constants";
 import { Post } from "./entities/Post";
+import { User } from './entities/User';
 
 export default {
     migrations: {
@@ -10,6 +11,6 @@ export default {
     },
     dbName: 'lired',
     type: 'postgresql',
-    entities: [Post],
+    entities: [Post, User],
     debug: __prod__ 
 } as Parameters<typeof MikroORM.init>[0]
