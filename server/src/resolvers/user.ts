@@ -31,17 +31,49 @@ class UserResponse {
 
 @Resolver()
 export class UserResolver {
-    @Mutation(() => User)
+    @Mutation(() => UserResponse)
     async register(
-        @Arg('registerInput') registerInput: UserInput,
+        @Arg('registerInput') { email, password }: UserInput,
         @Ctx() { em }: MyContext
-    ): Promise<User>{
-        const hashedPassword = await argon2.hash(registerInput.password)
+    ): Promise<UserResponse>{
+        const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/
+        if (!emailRegex.test(email)) {
+            return {
+                errors: [{
+                    field: 'email',
+                    message: 'input a valid email'
+                }]
+            }
+        }
 
-        const user = em.create(User, { email: registerInput.email, password: hashedPassword })
-        await em.persistAndFlush(user)
+        if (password.length < 8) {
+            return {
+                errors: [{
+                    field: 'password',
+                    message: 'password must be 8 characters or more'
+                }]
+            }
+        }
 
-        return user
+        const hashedPassword = await argon2.hash(password)
+        const user = em.create(User, { email, password: hashedPassword })
+        
+        try {
+            await em.persistAndFlush(user)
+        } catch (err) {
+            if (err.code === '23505') {
+                // duplicate email error
+                return {
+                    errors: [{
+                        field: 'email',
+                        message: 'email already exists'
+                    }]
+                }
+            }
+            
+        }
+
+        return { user }
     }
 
     @Mutation(() => UserResponse)
