@@ -18,20 +18,25 @@ const main = async () => {
 
     const server = express()
 
-    const RedisStore = connectRedis(session);
+    const RedisStore = connectRedis(session)
     const redisClient = redis.createClient()
 
     server.use(
         session({
             name: "qid",
-            store: new RedisStore({ client: redisClient }),
+            store: new RedisStore({
+                client: redisClient,
+                disableTouch: true
+            }),
             cookie: {
-                maxAge: 1000 * 60 * 60 * 24 * 365, // a year
+                maxAge: 1000 * 60 * 60 * 24 * 365, // 10 years
                 httpOnly: true,
-                sameSite: 'lax',
-                secure: __prod__
+                sameSite: 'lax', //csrf
+                secure: __prod__,
             },
-            secret: REDIS_SECRET
+            secret: REDIS_SECRET,
+            resave: false,
+            saveUninitialized: false
         })
     )
 
@@ -40,7 +45,7 @@ const main = async () => {
             resolvers: [PostResolver, UserResolver],
             validate: false,
         }),
-        context: ({ req, res }): MyContext => ({ em: orm.em, req, res })
+        context: ({ req, res }): MyContext => ({ em: orm.em, req, res }),
     })
 
     apolloServer.applyMiddleware({ app: server })
