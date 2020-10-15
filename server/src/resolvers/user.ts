@@ -45,7 +45,7 @@ export class UserResolver {
     @Mutation(() => UserResponse)
     async register(
         @Arg('registerInput') { email, password }: UserInput,
-        @Ctx() { em }: MyContext
+        @Ctx() { em, req }: MyContext
     ): Promise<UserResponse>{
         const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/
         if (!emailRegex.test(email)) {
@@ -83,6 +83,8 @@ export class UserResolver {
             }
             
         }
+
+        req.session.userID = user.id
 
         return { user }
     }
