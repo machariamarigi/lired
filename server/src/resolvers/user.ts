@@ -1,8 +1,8 @@
 import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Query, Resolver } from "type-graphql";
 import argon2 from "argon2";
+import { EntityManager } from '@mikro-orm/postgresql'
 import { MyContext } from "../types";
 import { User } from "../entities/User";
-
 
 @InputType()
 class UserInput {
@@ -67,12 +67,23 @@ export class UserResolver {
         }
 
         const hashedPassword = await argon2.hash(password)
-        const user = em.create(User, { email, password: hashedPassword })
+        let user;
         
         try {
-            await em.persistAndFlush(user)
+            const result = await (em as EntityManager)
+                .createQueryBuilder(User)
+                .getKnexQuery()
+                .insert({
+                    email,
+                    password: hashedPassword,
+                    created_at: new Date(),
+                    updated_at: new Date(),
+                })
+                .returning("*")
+
+            user = result[0]
         } catch (err) {
-            if (err.code === '23505') {
+            if (err.code === "23505") {
                 // duplicate email error
                 return {
                     errors: [{
@@ -83,6 +94,7 @@ export class UserResolver {
             }
             
         }
+
 
         req.session.userID = user.id
 
