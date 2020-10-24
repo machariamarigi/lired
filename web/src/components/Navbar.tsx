@@ -1,12 +1,13 @@
 import React from 'react'
 import { Box, Button, Flex, Link } from '@chakra-ui/core'
 import NextLink from "next/link"
-import { useMeQuery } from '../generated/graphql'
+import { useLogoutMutation, useMeQuery } from '../generated/graphql'
 
 interface NavbarProps {}
 
 const Navbar: React.FC<NavbarProps> = ({}) => {
     const [{ data, fetching }] = useMeQuery()
+    const [{ fetching: logoutFetching }, logout] = useLogoutMutation()
 
     const usernameFromEmail = (email: string): string => {
         const index = email.indexOf('@')
@@ -35,7 +36,14 @@ const Navbar: React.FC<NavbarProps> = ({}) => {
         body = (
             <Flex>
                 <Box color="white" mr={2}>{usernameFromEmail(data.me.email)}</Box>
-                <Button variant="link" color="crimson">Logout</Button>
+                <Button 
+                    variant="link"
+                    color="crimson"
+                    onClick={() => logout()}
+                    isLoading={logoutFetching}
+                >
+                        Logout
+                </Button>
             </Flex>
             
         )
