@@ -6,8 +6,7 @@ mutation Login($userInput: UserInput!){
       message
     }
     user {
-      email
-      id
+      ...RegularUser
     }
 	}
 }
