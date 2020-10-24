@@ -10,7 +10,7 @@ import cors from 'cors';
 import MikroORMConfig from './mikro-orm.config';
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
-import { REDIS_SECRET, __prod__ } from "./constants";
+import { COOKIE_NAME, REDIS_SECRET, __prod__ } from "./constants";
 
 const main = async () => {
     const orm = await MikroORM.init(MikroORMConfig)
@@ -30,7 +30,7 @@ const main = async () => {
 
     server.use(
         session({
-            name: "qid",
+            name: COOKIE_NAME,
             store: new RedisStore({
                 client: redisClient,
                 disableTouch: true
