@@ -14,8 +14,10 @@
     "formik": "^2.2.0",
     "graphql": "^15.3.0",
     "next": "latest",
+    "next-urql": "^2.0.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
+    "react-is": "^17.0.1",
     "urql": "^1.10.1"
   },
   "devDependencies": {
