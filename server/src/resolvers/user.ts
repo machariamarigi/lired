@@ -3,10 +3,13 @@ import argon2 from "argon2";
 import { EntityManager } from '@mikro-orm/postgresql'
 import { MyContext } from "../types";
 import { User } from "../entities/User";
-import { COOKIE_NAME } from "../constants";
+import { COOKIE_NAME, EMAIL_REGEX } from "../constants";
+import { validateRegister } from "../utils/validateRegister";
 
 @InputType()
 class UserInput {
+    @Field()
+    username: string
     @Field()
     email: string
     @Field()
@@ -32,6 +35,7 @@ class UserResponse {
 
 @Resolver()
 export class UserResolver {
+    
     @Query(() => User, { nullable: true })
     async me(
         @Ctx() { req, em }: MyContext
@@ -45,26 +49,14 @@ export class UserResolver {
 
     @Mutation(() => UserResponse)
     async register(
-        @Arg('registerInput') { email, password }: UserInput,
+        @Arg('registerInput') { username, email, password }: UserInput,
         @Ctx() { em, req }: MyContext
     ): Promise<UserResponse>{
-        const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/
-        if (!emailRegex.test(email)) {
-            return {
-                errors: [{
-                    field: 'email',
-                    message: 'input a valid email'
-                }]
-            }
-        }
 
-        if (password.length < 8) {
-            return {
-                errors: [{
-                    field: 'password',
-                    message: 'password must be 8 characters or more'
-                }]
-            }
+        const validationResponse = validateRegister(username, email, password)
+
+        if (validationResponse) {
+            return validationResponse
         }
 
         const hashedPassword = await argon2.hash(password)
@@ -77,6 +69,7 @@ export class UserResolver {
                 .insert({
                     email,
                     password: hashedPassword,
+                    username,
                     created_at: new Date(),
                     updated_at: new Date(),
                 })
@@ -84,12 +77,18 @@ export class UserResolver {
 
             user = result[0]
         } catch (err) {
-            if (err.code === "23505") {
-                // duplicate email error
+            if (err.detail.includes(`Key (username)=(${username}) already exists.`)) {
+                return {
+                    errors: [{
+                        field: 'username',
+                        message: 'username already used'
+                    }]
+                }
+            } else if (err.detail.includes(`Key (email)=(${email}) already exists.`)) {
                 return {
                     errors: [{
                         field: 'email',
-                        message: 'email already exists'
+                        message: 'email already used'
                     }]
                 }
             }
@@ -104,20 +103,26 @@ export class UserResolver {
 
     @Mutation(() => UserResponse)
     async login(
-        @Arg('loginInput') loginInput: UserInput,
+        @Arg('usernameOrEmail') usernameOrEmail: string,
+        @Arg('password') password: string,
         @Ctx() { em, req }: MyContext
     ): Promise<UserResponse> {
-        const user = await em.findOne(User, { email: loginInput.email })
+        const user = await em.findOne(
+            User,
+            EMAIL_REGEX.test(usernameOrEmail)
+                ? { email: usernameOrEmail }
+                : { username: usernameOrEmail }
+        )
         if (!user) {
             return {
                 errors: [{
-                    field: 'email',
-                    message: 'could not find user with that email'
+                    field: 'usernameOrEmail',
+                    message: 'could not find user with that username or email'
                 }]
             }
         }
 
-        const valid = await argon2.verify(user.password, loginInput.password)
+        const valid = await argon2.verify(user.password, password)
         if (!valid) {
             return {
                 errors: [{
@@ -146,4 +151,5 @@ export class UserResolver {
             resolve(true)
         }))
     }
+
 }
