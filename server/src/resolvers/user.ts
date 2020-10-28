@@ -53,10 +53,10 @@ export class UserResolver {
         @Ctx() { em, req }: MyContext
     ): Promise<UserResponse>{
 
-        const validationResponse = validateRegister(username, email, password)
+        const validationErrors = validateRegister(username, email, password)
 
-        if (validationResponse) {
-            return validationResponse
+        if (validationErrors) {
+            return {errors: validationErrors}
         }
 
         const hashedPassword = await argon2.hash(password)
@@ -150,6 +150,14 @@ export class UserResolver {
             }
             resolve(true)
         }))
+    }
+
+    @Mutation(() => Boolean)
+    async forgetPassword(
+        @Arg('email') email: string,
+        @Ctx() { em }: MyContext
+    ){
+        const person = await em.findOne(User, { email })
     }
 
 }
