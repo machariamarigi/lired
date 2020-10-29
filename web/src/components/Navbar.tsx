@@ -12,11 +12,6 @@ const Navbar: React.FC<NavbarProps> = ({}) => {
     })
     const [{ fetching: logoutFetching }, logout] = useLogoutMutation()
 
-    const usernameFromEmail = (email: string): string => {
-        const index = email.indexOf('@')
-        return email.substr(0, index)
-    }
-
     let body = null
 
     if (fetching) {
@@ -38,7 +33,7 @@ const Navbar: React.FC<NavbarProps> = ({}) => {
         // user is logged in
         body = (
             <Flex>
-                <Box color="white" mr={2}>{usernameFromEmail(data.me.email)}</Box>
+                <Box color="white" mr={2}>{data.me.username}</Box>
                 <Button 
                     variant="link"
                     color="crimson"
