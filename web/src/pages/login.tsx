@@ -1,12 +1,13 @@
 import React from 'react'
 import { Formik, Form } from 'formik'
-import { Box, Button } from '@chakra-ui/core'
+import { Box, Button, Flex, Link, Spacer } from '@chakra-ui/core'
 import { useRouter } from 'next/dist/client/router'
+import { withUrqlClient } from 'next-urql'
+import NextLink from 'next/link'
 import Wrapper from '../components/Wrapper'
 import InputField from '../components/InputField'
 import { useLoginMutation } from '../generated/graphql'
 import { toErrorMap } from '../utils/toErrorMap'
-import { withUrqlClient } from 'next-urql'
 import { createUrqlClient } from '../utils/createUrqlClient'
 
 
@@ -36,15 +37,22 @@ const Login: React.FC<LoginProps> = ({}) => {
                     <Form>
                         <InputField name="usernameOrEmail" placeholder="Username or Email" label="Username Or Email" />
                         <Box mt={4}></Box>
-                        <InputField name="password" placeholder="Password" label="Password" type="password"/> 
-                        <Button 
-                            mt={4}
-                            type="submit"
-                            colorScheme="green"
-                            isLoading={isSubmitting}
-                        >
-                                Login
-                        </Button>
+                        <InputField name="password" placeholder="Password" label="Password" type="password"/>
+                        <Flex mt={4}>
+                            <Button   
+                                type="submit"
+                                colorScheme="green"
+                                isLoading={isSubmitting}
+                            >
+                                 Login
+                            </Button>
+                            <Spacer />
+                            <Flex align="center">
+                                <NextLink href="/forgot-password">
+                                    <Link>forgot password?</Link>
+                                </NextLink> 
+                            </Flex>
+                        </Flex>
                     </Form>
                     
                 )}
