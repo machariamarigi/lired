@@ -1,12 +1,12 @@
 import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Query, Resolver } from "type-graphql";
 import argon2 from "argon2";
-import { EntityManager } from '@mikro-orm/postgresql'
+import { getConnection } from "typeorm";
+import { v4 } from "uuid";
 import { MyContext } from "../types";
 import { User } from "../entities/User";
 import { COOKIE_NAME, EMAIL_REGEX, FORGET_PASSWORD_PREFIX } from "../constants";
 import { validateRegister } from "../utils/validateRegister";
 import { sendEmail } from "../utils/sendEmail";
-import { v4 } from "uuid";
 
 @InputType()
 class UserInput {
@@ -37,22 +37,21 @@ class UserResponse {
 
 @Resolver()
 export class UserResolver {
-    
     @Query(() => User, { nullable: true })
     async me(
-        @Ctx() { req, em }: MyContext
-    ): Promise<User | null>{
+        @Ctx() { req }: MyContext
+    ): Promise<User | undefined>{
         if(!req.session.userID) {
-            return null
+            return undefined
         }
 
-        return await em.findOne(User, { id: req.session.userID })
+        return await User.findOne(req.session.userID)
     }
 
     @Mutation(() => UserResponse)
     async register(
         @Arg('registerInput') { username, email, password }: UserInput,
-        @Ctx() { em, req }: MyContext
+        @Ctx() { req }: MyContext
     ): Promise<UserResponse>{
 
         const validationErrors = validateRegister(username, email, password)
@@ -65,19 +64,15 @@ export class UserResolver {
         let user;
         
         try {
-            const result = await (em as EntityManager)
-                .createQueryBuilder(User)
-                .getKnexQuery()
-                .insert({
-                    email,
-                    password: hashedPassword,
-                    username,
-                    created_at: new Date(),
-                    updated_at: new Date(),
-                })
-                .returning("*")
+            const result = await getConnection().createQueryBuilder().insert().into(User).values({
+                email,
+                password: hashedPassword,
+                username,
+            })
+            .returning('*')
+            .execute()
 
-            user = result[0]
+            user = result.raw[0]
         } catch (err) {
             if (err.detail.includes(`Key (username)=(${username}) already exists.`)) {
                 return {
@@ -98,7 +93,7 @@ export class UserResolver {
         }
 
 
-        req.session.userID = user.id
+        // req.session.userID = user.id
 
         return { user }
     }
@@ -107,13 +102,12 @@ export class UserResolver {
     async login(
         @Arg('usernameOrEmail') usernameOrEmail: string,
         @Arg('password') password: string,
-        @Ctx() { em, req }: MyContext
+        @Ctx() { req }: MyContext
     ): Promise<UserResponse> {
-        const user = await em.findOne(
-            User,
+        const user = await User.findOne(
             EMAIL_REGEX.test(usernameOrEmail)
-                ? { email: usernameOrEmail }
-                : { username: usernameOrEmail }
+                ? { where: { email: usernameOrEmail } }
+                : { where: { username: usernameOrEmail } }
         )
         if (!user) {
             return {
@@ -157,9 +151,9 @@ export class UserResolver {
     @Mutation(() => Boolean)
     async forgotPassword(
         @Arg('email') email: string,
-        @Ctx() { em, redis }: MyContext
+        @Ctx() { redis }: MyContext
     ){
-        const user = await em.findOne(User, { email })
+        const user = await User.findOne({ where: { email } })
 
         if (!user) {
             return true
@@ -186,7 +180,7 @@ export class UserResolver {
     async changePassword(
         @Arg('token') token: string,
         @Arg('newPassword') newPassword: string,
-        @Ctx() { redis, em, req }: MyContext
+        @Ctx() { redis, req }: MyContext
     ): Promise<UserResponse> {
         
         if (newPassword.length < 8) {
@@ -201,7 +195,7 @@ export class UserResolver {
         }
 
         const redisKey = FORGET_PASSWORD_PREFIX + token
-        const userId = await redis.get(redisKey)
+        const userId = parseInt(await redis.get(redisKey) as string)
 
         if (!userId) {
             return { 
@@ -214,7 +208,7 @@ export class UserResolver {
             }  
         }
 
-        const user = await em.findOne(User, { id: parseInt(userId) })
+        const user = await User.findOne(userId)
 
         if (!user) {
             return { 
@@ -227,8 +221,11 @@ export class UserResolver {
             }  
         }
 
-        user.password = await argon2.hash(newPassword)
-        await em.persistAndFlush(user)
+
+        await User.update(
+            { id: userId },
+            { password: await argon2.hash(newPassword) }
+        )
 
         await redis.del(redisKey)
 
