@@ -93,7 +93,7 @@ export class UserResolver {
         }
 
 
-        // req.session.userID = user.id
+        req.session.userId = user.id
 
         return { user }
     }
@@ -128,7 +128,9 @@ export class UserResolver {
             }
         }
 
-        req.session!.userID = user.id
+        req.session!.userId = user.id
+
+        console.log(req.session)
 
         return {user}
     }
