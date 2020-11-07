@@ -1,4 +1,5 @@
 import "reflect-metadata"
+import path from 'path';
 import express from 'express';
 import { ApolloServer } from 'apollo-server-express';
 import { buildSchema } from "type-graphql";
@@ -19,8 +20,11 @@ const main = async () => {
         url: DATABASE_URL,
         logging: true,
         entities: [User, Post],
-        synchronize: !__prod__
+        synchronize: !__prod__,
+        migrations: [path.join(__dirname, './migrations/*')]
     })
+
+    await conn.runMigrations()
 
     const server = express()
 
