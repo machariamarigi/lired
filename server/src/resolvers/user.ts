@@ -1,4 +1,4 @@
-import { Arg, Ctx, Field, InputType, Mutation, ObjectType, Query, Resolver } from "type-graphql";
+import { Arg, Ctx, Field, FieldResolver, InputType, Mutation, ObjectType, Query, Resolver, Root } from "type-graphql";
 import argon2 from "argon2";
 import { getConnection } from "typeorm";
 import { v4 } from "uuid";
@@ -35,17 +35,26 @@ class UserResponse {
     user?: User
 }
 
-@Resolver()
+@Resolver(User)
 export class UserResolver {
+    @FieldResolver(() => String)
+    email(@Root() user: User, @Ctx() { req }: MyContext) {
+        if(req.session.userId === user.id) {
+            return user.email
+        }
+
+        return ''
+    }
+
     @Query(() => User, { nullable: true })
     async me(
         @Ctx() { req }: MyContext
-    ): Promise<User | undefined>{
-        if(!req.session.userID) {
-            return undefined
+    ): Promise<User | null | undefined>{
+        if(!req.session.userId) {
+            return null
         }
 
-        return await User.findOne(req.session.userID)
+        return await User.findOne(req.session.userId)
     }
 
     @Mutation(() => UserResponse)
@@ -128,7 +137,7 @@ export class UserResolver {
             }
         }
 
-        req.session!.userId = user.id
+        req.session.userId = user.id
 
         console.log(req.session)
 
