@@ -13,13 +13,15 @@ import { COOKIE_NAME, DATABASE_URL, REDIS_SECRET, __prod__ } from "./constants";
 import { createConnection } from "typeorm";
 import { User } from "./entities/User";
 import { Post } from "./entities/Post";
+import { Vote } from "./entities/Vote";
+import { VoteResolver } from "./resolvers/vote";
 
 const main = async () => {
     const conn = await createConnection({
         type: "postgres",
         url: DATABASE_URL,
         logging: true,
-        entities: [User, Post],
+        entities: [User, Post, Vote],
         synchronize: !__prod__,
         migrations: [path.join(__dirname, './migrations/*')]
     })
@@ -59,7 +61,7 @@ const main = async () => {
 
     const apolloServer = new ApolloServer({
         schema: await buildSchema({
-            resolvers: [PostResolver, UserResolver],
+            resolvers: [PostResolver, UserResolver, VoteResolver],
             validate: false,
         }),
         context: ({ req, res }) => ({ req, res, redis }),
