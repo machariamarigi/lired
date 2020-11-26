@@ -8,6 +8,10 @@ query Posts($limit: Int!, $cursor: String){
       points,
       creatorId,
       createdAt,
+      creator {
+        id,
+        username
+      }
     }
   }
 }
