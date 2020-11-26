@@ -24,7 +24,7 @@ const Index = () => {
     return (
         <Layout>
             <Flex align="center">
-                <Heading>MicroBlog </Heading>
+                <Heading>MicroForum</Heading>
                 <NextLink href='/create-post'>
                     <Link ml="auto">Create Post</Link>
                 </NextLink>                
@@ -36,6 +36,7 @@ const Index = () => {
                 { fetching && !data ? <div>Loading...</div>: data!.posts.posts.map((p) => (
                     <Box key={p.id} p={5} shadow="md" borderWidth="1px">
                         <Heading fontSize="xl">{p.title}</Heading>
+                        <Text fontSize="xs">posted by <Text as="i">{ p.creator.username }</Text></Text>
                         <Text>{p.textSnippet}</Text>
                     </Box>
                 ))}
