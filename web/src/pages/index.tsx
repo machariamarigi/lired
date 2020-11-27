@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
 import { withUrqlClient } from 'next-urql'
 import NextLink from "next/link"
-import { Box, Flex, Heading, Link, Stack, Text, Button } from '@chakra-ui/core'
+import { Box, Flex, Heading, Link, Stack, Text, Button, IconButton } from '@chakra-ui/core'
 import { createUrqlClient } from "../utils/createUrqlClient"
 import { usePostsQuery } from "../generated/graphql"
 import Layout from "../components/Layout"
+import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons'
+import VoteSection from '../components/VoteSection'
 
 
 const Index = () => {
@@ -34,11 +36,15 @@ const Index = () => {
 
             <Stack>
                 { fetching && !data ? <div>Loading...</div>: data!.posts.posts.map((p) => (
-                    <Box key={p.id} p={5} shadow="md" borderWidth="1px">
-                        <Heading fontSize="xl">{p.title}</Heading>
-                        <Text fontSize="xs">posted by <Text as="i">{ p.creator.username }</Text></Text>
-                        <Text>{p.textSnippet}</Text>
-                    </Box>
+                    <Flex key={p.id} p={5} shadow="md" borderWidth="1px">
+                        <VoteSection post={p} />
+                        <Box>
+                            <Heading fontSize="xl">{p.title}</Heading>
+                            <Text fontSize="xs">posted by <Text as="i">{ p.creator.username }</Text></Text>
+                            <Text mt={3}>{p.textSnippet}</Text>
+                        </Box>
+                        
+                    </Flex>
                 ))}
             </Stack>
 
