@@ -45,11 +45,12 @@ export class PostResolver {
     @Query(() => PaginatedPosts)
     async posts(
         @Arg('limit', () => Int) limit: number,
-        @Arg('cursor', () => String, { nullable: true } ) cursor: string | null
+        @Arg('cursor', () => String, { nullable: true } ) cursor: string | null,
+        @Ctx() { req }: MyContext
     ): Promise<PaginatedPosts> {
         const realLimit = Math.min(50, limit)
 
-        const replacements: any[] = [realLimit + 1]
+        const replacements: any[] = [realLimit + 1, req.session.userId]
 
         if (cursor) {
             replacements.push(new Date(parseInt(cursor)))
@@ -57,19 +58,24 @@ export class PostResolver {
 
         const posts = await getConnection().query(
             `
-                select p.*,
+                SELECT p.*,
                 json_build_object(
                     'id', u.id,
                     'username', u.username,
                     'email', u.email,
                     'createdAt', u."createdAt",
                     'updatedAt', u."updatedAt"
-                ) creator
+                ) creator,
+                ${
+                    req.session.userId 
+                    ? '(SELECT value from vote WHERE "userId" = $2 and "postId" = p.id) "voteStatus"'
+                    : 'null as "voteStatus"'
+                }
                 from post p
-                inner join public.user u on u.id = p."creatorId"
-                ${cursor ? `where p."createdAt" < $2` : ''}
-                order by p."createdAt" DESC
-                limit $1
+                INNER JOIN public.user u on u.id = p."creatorId"
+                ${cursor ? `WHERE p."createdAt" < $2` : ''}
+                ORDER by p."createdAt" DESC
+                LIMIT $1
             `,
             replacements
         )
