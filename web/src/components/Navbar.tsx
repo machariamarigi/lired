@@ -7,10 +7,11 @@ import { isServer } from '../utils/isServer'
 interface NavbarProps {}
 
 const Navbar: React.FC<NavbarProps> = ({}) => {
+    const [{ fetching: logoutFetching }, logout] = useLogoutMutation()
+
     const [{ data, fetching }] = useMeQuery({
         pause: isServer()
     })
-    const [{ fetching: logoutFetching }, logout] = useLogoutMutation()
 
     let body = null
 
@@ -20,14 +21,14 @@ const Navbar: React.FC<NavbarProps> = ({}) => {
     } else if (!data?.me) {
         // user not logged in
         body = (
-            <Box>
+            <>
                 <NextLink href="/login">
                     <Link mr={2} color="white">Login</Link>
                 </NextLink>
                 <NextLink href="register">
-                   <Link color="white">Register</Link> 
+                    <Link color="white">Register</Link> 
                 </NextLink>
-            </Box>
+            </>
         )
     } else {
         // user is logged in
@@ -48,12 +49,12 @@ const Navbar: React.FC<NavbarProps> = ({}) => {
     }
     return (
         <Flex bg="teal.500" p={4} zIndex={1} position="sticky" top={0}>
-            <Box ml={"auto"}>
+            <Box ml="auto">
                 {body}
             </Box>            
         </Flex>
 
-    );
+    )
 }
 
 export default Navbar
