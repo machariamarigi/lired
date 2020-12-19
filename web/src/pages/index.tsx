@@ -5,7 +5,6 @@ import { Box, Flex, Heading, Link, Stack, Text, Button, IconButton } from '@chak
 import { createUrqlClient } from "../utils/createUrqlClient"
 import { usePostsQuery } from "../generated/graphql"
 import Layout from "../components/Layout"
-import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons'
 import VoteSection from '../components/VoteSection'
 
 
