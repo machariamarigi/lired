@@ -23,8 +23,12 @@ const VoteSection: React.FC<VoteSectionProps> = ({ post }) => {
                 icon={<ChevronUpIcon />}
                 aria-label="vote +1"
                 size="sm"
-                variant="outline"
+                variant={post.voteStatus === 1 ? undefined : 'outline'}
+                colorScheme="green"
                 onClick={async () => {
+                    if (post.voteStatus === 1) {
+                        return
+                    }
                     setLoadingState("upvote-loading")
                     await vote({
                         postId: post.id,
@@ -39,8 +43,12 @@ const VoteSection: React.FC<VoteSectionProps> = ({ post }) => {
                 icon={<ChevronDownIcon />}
                 aria-label="vote -1"
                 size="sm"
-                variant="outline"
+                variant={post.voteStatus === -1 ? undefined : 'outline'}
+                colorScheme="red"
                 onClick={async () => {
+                    if (post.voteStatus === -1) {
+                        return
+                    }
                     setLoadingState("downvote-loading")
                     await vote({
                         postId: post.id,
