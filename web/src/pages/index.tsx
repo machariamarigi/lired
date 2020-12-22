@@ -24,15 +24,6 @@ const Index = () => {
 
     return (
         <Layout>
-            <Flex align="center">
-                <Heading>MicroForum</Heading>
-                <NextLink href='/create-post'>
-                    <Link ml="auto">Create Post</Link>
-                </NextLink>                
-            </Flex>
-
-            <br />
-
             <Stack>
                 { fetching && !data ? <div>Loading...</div>: data!.posts.posts.map((p) => (
                     <Flex key={p.id} p={5} shadow="md" borderWidth="1px">

@@ -33,7 +33,12 @@ const Navbar: React.FC<NavbarProps> = ({}) => {
     } else {
         // user is logged in
         body = (
-            <Flex>
+            <Flex align="center">
+                <NextLink href='/create-post'>
+                    <Button as={Link} mr={4} colorScheme="pink">
+                        Create Post
+                    </Button>
+                </NextLink>    
                 <Box color="white" mr={2}>{data.me.username}</Box>
                 <Button 
                     variant="link"
@@ -48,15 +53,17 @@ const Navbar: React.FC<NavbarProps> = ({}) => {
         )
     }
     return (
-        <Flex bg="teal.500" p={4} zIndex={1} position="sticky" top={0} align="center">
-            <NextLink href="/">
-                <Link>
-                    <Heading>MicroForum[MF]</Heading>
-                </Link>
-            </NextLink>
-            <Box ml="auto">
-                {body}
-            </Box>            
+        <Flex bg="teal.500" p={4} zIndex={1} position="sticky" top={0}>
+            <Flex flex={1} align="center" maxW={800} m="auto">
+                <NextLink href="/">
+                    <Link>
+                        <Heading>MicroForum[MF]</Heading>
+                    </Link>
+                </NextLink>
+                <Box ml="auto">
+                    {body}
+                </Box>
+            </Flex>         
         </Flex>
 
     )
