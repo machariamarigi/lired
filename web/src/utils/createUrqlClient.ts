@@ -5,6 +5,7 @@ import Router from 'next/router';
 import gql from "graphql-tag";
 import { LoginMutation, MeQuery, MeDocument, RegisterMutation, LogoutMutation, VoteMutationVariables } from "../generated/graphql"
 import { betterUpdateQuery } from './betterUpdateQuery';
+import { isServer } from "./isServer";
 
 
 const errorExchange: Exchange = ({ forward }) => (ops$) => {
@@ -60,7 +61,13 @@ const cursorPagination = (): Resolver => {
   }
 }
 
-export const createUrqlClient = (ssrExchange: any) => ({
+export const createUrqlClient = (ssrExchange: any, ctx: any) => { 
+  let cookie = ''
+
+  if (isServer()) {
+    cookie = ctx.req.headers.cookie
+  }
+  return {
     url: process.env.NEXT_PUBLIC_GRAPHQL_SERVER as string,
     exchanges: [
       dedupExchange,
@@ -166,6 +173,10 @@ export const createUrqlClient = (ssrExchange: any) => ({
       fetchExchange
     ],
     fetchOptions: {
-      credentials: 'include' as const
+      credentials: 'include' as const,
+      headers: cookie ? {
+        cookie
+      } : undefined
     }
-})
+  }
+}
