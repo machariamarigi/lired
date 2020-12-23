@@ -12,10 +12,11 @@ import {
     Root,
     UseMiddleware
 } from "type-graphql";
+import { getConnection } from "typeorm";
 import { Post } from "../entities/Post";
 import { MyContext } from "../types";
 import { isAuth } from "../middleware/isAuth";
-import { getConnection } from "typeorm";
+import { Vote } from "../entities/Vote";
 
 @InputType()
 class PostInput {
@@ -130,10 +131,23 @@ export class PostResolver {
     }
 
     @Mutation(() => Boolean)
+    @UseMiddleware(isAuth)
     async deletePost(
-        @Arg('id') id: number,
+        @Arg('id', () => Int) id: number,
+        @Ctx() { req }: MyContext
     ): Promise<boolean> {
-        await  Post.delete(id)
+        const post = await Post.findOne(id)
+
+    if (!post) {
+            return false
+        }
+
+        if (post.creatorId !== req.session.userId) {
+            throw new Error('Not Authorised')
+        }
+
+        await Vote.delete({ postId: id })
+        await Post.delete({ id })
         return true
     }
 }
