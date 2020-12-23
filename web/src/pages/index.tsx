@@ -3,9 +3,10 @@ import { withUrqlClient } from 'next-urql'
 import NextLink from "next/link"
 import { Box, Flex, Heading, Link, Stack, Text, Button, IconButton } from '@chakra-ui/core'
 import { createUrqlClient } from "../utils/createUrqlClient"
-import { usePostsQuery } from "../generated/graphql"
+import { useDeletePostMutation, useMeQuery, usePostsQuery } from "../generated/graphql"
 import Layout from "../components/Layout"
 import VoteSection from '../components/VoteSection'
+import { DeleteIcon } from '@chakra-ui/icons'
 
 
 const Index = () => {
@@ -14,9 +15,13 @@ const Index = () => {
         cursor: null as null | string
     })
 
+    const [{ data: dataMe }] = useMeQuery()
+
     const [{ data, fetching }] = usePostsQuery({
         variables
     })
+
+    const [, deletePost] = useDeletePostMutation()
 
     if (!fetching && !data) {
         return <div>Oops! No posts ware loaded</div>
@@ -25,17 +30,30 @@ const Index = () => {
     return (
         <Layout>
             <Stack>
-                { fetching && !data ? <div>Loading...</div>: data!.posts.posts.map((p) => (
+                { fetching && !data ? <div>Loading...</div>: data!.posts.posts.map((p) =>
+                !p ? null : (
                     <Flex key={p.id} p={5} shadow="md" borderWidth="1px">
                         <VoteSection post={p} />
-                        <Box>
+                        <Box flex={1}>
                             <NextLink href="/post/[id]"  as={`/post/${p.id}`}>
                                 <Link>
                                     <Heading fontSize="xl">{p.title}</Heading>
                                 </Link>
                             </NextLink>
                             <Text fontSize="xs">posted by <Text as="i">{ p.creator.username }</Text></Text>
-                            <Text mt={3}>{p.textSnippet}</Text>
+                            <Flex mt={3} align="center">
+                                <Text flex={1}>{p.textSnippet}</Text>
+                                <IconButton
+                                    icon={<DeleteIcon />}
+                                    visibility={p.creatorId === dataMe?.me?.id ? 'visible' : 'hidden' }
+                                    aria-label="Delete Post"
+                                    ml="auto"
+                                    colorScheme="red"
+                                    onClick={() => {
+                                        deletePost({ id: p.id })
+                                    }}
+                                />
+                            </Flex>
                         </Box>
                         
                     </Flex>
