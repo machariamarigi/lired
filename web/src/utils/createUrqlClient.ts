@@ -3,7 +3,7 @@ import { cacheExchange, Resolver } from '@urql/exchange-graphcache';
 import { tap, pipe } from 'wonka';
 import Router from 'next/router';
 import gql from "graphql-tag";
-import { LoginMutation, MeQuery, MeDocument, RegisterMutation, LogoutMutation, VoteMutationVariables } from "../generated/graphql"
+import { LoginMutation, MeQuery, MeDocument, RegisterMutation, LogoutMutation, VoteMutationVariables, DeletePostMutation, DeletePostMutationVariables } from "../generated/graphql"
 import { betterUpdateQuery } from './betterUpdateQuery';
 import { isServer } from "./isServer";
 
@@ -98,6 +98,7 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
                 }
               )
             },
+
             register: (_result, args, cache, info) => {
               betterUpdateQuery<RegisterMutation, MeQuery>(
                 cache,
@@ -114,6 +115,7 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
                 }
               )
             },
+
             logout: (_result, args, cache, info) => {
               betterUpdateQuery<LogoutMutation, MeQuery>(
                 cache,
@@ -122,6 +124,7 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
                 () => ({ me: null })
               )
             },
+  
             createPost: (_result, args, cache, info) => {
               const allFields = cache.inspectFields('Query')
               const fieldInfos = allFields.filter(
@@ -133,6 +136,13 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
               })
               
             },
+
+            deletePost: (_result, args, cache, info) => {
+              cache.invalidate({
+                 __typename: 'Post',
+                 id: (args as DeletePostMutationVariables).id })
+            },
+
             vote: (_result, args, cache, info) => {
               const { postId, value } = args as VoteMutationVariables
 
