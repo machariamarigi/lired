@@ -6,7 +6,7 @@ import { createUrqlClient } from "../utils/createUrqlClient"
 import { useDeletePostMutation, useMeQuery, usePostsQuery } from "../generated/graphql"
 import Layout from "../components/Layout"
 import VoteSection from '../components/VoteSection'
-import { DeleteIcon } from '@chakra-ui/icons'
+import { DeleteIcon, EditIcon } from '@chakra-ui/icons'
 
 
 const Index = () => {
@@ -43,16 +43,28 @@ const Index = () => {
                             <Text fontSize="xs">posted by <Text as="i">{ p.creator.username }</Text></Text>
                             <Flex mt={3} align="center">
                                 <Text flex={1}>{p.textSnippet}</Text>
-                                <IconButton
-                                    icon={<DeleteIcon />}
-                                    visibility={p.creatorId === dataMe?.me?.id ? 'visible' : 'hidden' }
-                                    aria-label="Delete Post"
-                                    ml="auto"
-                                    colorScheme="red"
-                                    onClick={() => {
-                                        deletePost({ id: p.id })
-                                    }}
-                                />
+                                <Box ml="auto" visibility={p.creatorId === dataMe?.me?.id ? 'visible' : 'hidden' }>
+                                    <NextLink href="/post/edit/[id]" as={`post/edit/${p.id}`}>
+                                        <IconButton
+                                            as={Link}
+                                            icon={<EditIcon />}
+                                            aria-label="Edit Post"
+                                            mr={4}
+                                            variant="outline"
+                                            colorScheme="blue"
+                                        />                              
+                                    </NextLink>
+
+                                    <IconButton
+                                        icon={<DeleteIcon />}
+                                        aria-label="Delete Post"
+                                        onClick={() => {
+                                            deletePost({ id: p.id })
+                                        }}
+                                        variant="outline"
+                                        colorScheme="red"
+                                    />
+                                </Box>
                             </Flex>
                         </Box>
                         
