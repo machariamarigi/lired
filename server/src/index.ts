@@ -15,6 +15,7 @@ import { User } from "./entities/User";
 import { Post } from "./entities/Post";
 import { Vote } from "./entities/Vote";
 import { VoteResolver } from "./resolvers/vote";
+import { createUserLoader } from "./utils/createUserLoader";
 
 const main = async () => {
     const conn = await createConnection({
@@ -64,7 +65,12 @@ const main = async () => {
             resolvers: [PostResolver, UserResolver, VoteResolver],
             validate: false,
         }),
-        context: ({ req, res }) => ({ req, res, redis }),
+        context: ({ req, res }) => ({
+            req,
+            res,
+            redis,
+            userLoader: createUserLoader()
+        }),
     })
 
     apolloServer.applyMiddleware({
