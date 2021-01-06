@@ -17,6 +17,7 @@ import { Post } from "../entities/Post";
 import { MyContext } from "../types";
 import { isAuth } from "../middleware/isAuth";
 import { Vote } from "../entities/Vote";
+import { User } from "../entities/User";
 
 @InputType()
 class PostInput {
@@ -43,6 +44,11 @@ export class PostResolver {
         return root.text.length > 50 ? root.text.slice(0, 50) + '...' : root.text
     }
 
+    @FieldResolver(() => User)
+    creator(@Root() post: Post, @Ctx() { userLoader }: MyContext) {
+        return userLoader.load(post.creatorId)
+    }
+
     @Query(() => PaginatedPosts)
     async posts(
         @Arg('limit', () => Int) limit: number,
@@ -66,20 +72,12 @@ export class PostResolver {
         const posts = await getConnection().query(
             `
                 SELECT p.*,
-                json_build_object(
-                    'id', u.id,
-                    'username', u.username,
-                    'email', u.email,
-                    'createdAt', u."createdAt",
-                    'updatedAt', u."updatedAt"
-                ) creator,
                 ${
                     req.session.userId 
                     ? '(SELECT value from vote WHERE "userId" = $2 and "postId" = p.id) "voteStatus"'
                     : 'null as "voteStatus"'
                 }
                 from post p
-                INNER JOIN public.user u on u.id = p."creatorId"
                 ${cursor ? `WHERE p."createdAt" < $${cursorIdx}` : ''}
                 ORDER by p."createdAt" DESC
                 LIMIT $1
@@ -98,7 +96,7 @@ export class PostResolver {
     post(
         @Arg('id', () => Int) id: number,
     ): Promise<Post | undefined> {
-        return Post.findOne(id,{ relations: ['creator'] })
+        return Post.findOne(id)
     }
 
     @Mutation(() => Post)
