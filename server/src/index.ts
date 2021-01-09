@@ -16,6 +16,7 @@ import { Post } from "./entities/Post";
 import { Vote } from "./entities/Vote";
 import { VoteResolver } from "./resolvers/vote";
 import { createUserLoader } from "./utils/createUserLoader";
+import { createVoteLoader } from "./utils/createVoteLoader";
 
 const main = async () => {
     const conn = await createConnection({
@@ -69,7 +70,8 @@ const main = async () => {
             req,
             res,
             redis,
-            userLoader: createUserLoader()
+            userLoader: createUserLoader(),
+            voteLoader: createVoteLoader()
         }),
     })
 
