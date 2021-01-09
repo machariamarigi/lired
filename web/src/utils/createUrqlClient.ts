@@ -1,9 +1,9 @@
-import { dedupExchange, Exchange, fetchExchange, stringifyVariables } from "urql"
-import { cacheExchange, Resolver } from '@urql/exchange-graphcache';
-import { tap, pipe } from 'wonka';
-import Router from 'next/router';
+import { cacheExchange, Resolver, Cache } from '@urql/exchange-graphcache';
 import gql from "graphql-tag";
-import { LoginMutation, MeQuery, MeDocument, RegisterMutation, LogoutMutation, VoteMutationVariables, DeletePostMutation, DeletePostMutationVariables } from "../generated/graphql"
+import Router from 'next/router';
+import { dedupExchange, Exchange, fetchExchange, stringifyVariables } from "urql";
+import { pipe, tap } from 'wonka';
+import { DeletePostMutationVariables, LoginMutation, LogoutMutation, MeDocument, MeQuery, RegisterMutation, VoteMutationVariables } from "../generated/graphql";
 import { betterUpdateQuery } from './betterUpdateQuery';
 import { isServer } from "./isServer";
 
@@ -17,6 +17,17 @@ const errorExchange: Exchange = ({ forward }) => (ops$) => {
       }
     })
   )
+}
+
+const invalidateAllPosts = (cache: Cache) => {
+  const allFields = cache.inspectFields('Query')
+  const fieldInfos = allFields.filter(
+    info => info.fieldName === 'posts'
+  )
+
+  fieldInfos.forEach((fi) => {
+    cache.invalidate('Query', 'posts', fi.arguments || {})
+  })
 }
 
 const cursorPagination = (): Resolver => {
@@ -97,6 +108,8 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
                   }
                 }
               )
+
+              invalidateAllPosts(cache)
             },
 
             register: (_result, args, cache, info) => {
@@ -126,15 +139,7 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => {
             },
   
             createPost: (_result, args, cache, info) => {
-              const allFields = cache.inspectFields('Query')
-              const fieldInfos = allFields.filter(
-                info => info.fieldName === 'posts'
-              )
-
-              fieldInfos.forEach((fi) => {
-                cache.invalidate('Query', 'posts', fi.arguments || {})
-              })
-              
+              invalidateAllPosts(cache)
             },
 
             deletePost: (_result, args, cache, info) => {
