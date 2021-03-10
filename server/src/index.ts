@@ -9,7 +9,7 @@ import connectRedis from 'connect-redis';
 import cors from 'cors';
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
-import { COOKIE_NAME, DATABASE_URL, REDIS_SECRET, __prod__ } from "./constants";
+import { COOKIE_NAME, CORS_ORIGIN, DATABASE_URL, PORT, REDIS_SECRET, REDIS_URL, __prod__ } from "./constants";
 import { createConnection } from "typeorm";
 import { User } from "./entities/User";
 import { Post } from "./entities/Post";
@@ -32,15 +32,17 @@ const main = async () => {
 
     const server = express()
 
+    server.set("proxy", 1)
+
     server.use(
         cors({
-            origin: 'http://localhost:3000',
+            origin: CORS_ORIGIN,
             credentials: true       
         })
     )
 
     const RedisStore = connectRedis(session)
-    const redis = new Redis()
+    const redis = new Redis(REDIS_URL)
 
     server.use(
         session({
@@ -53,7 +55,8 @@ const main = async () => {
                 maxAge: 1000 * 60 * 60 * 24 * 365, // 10 years
                 httpOnly: true,
                 sameSite: 'lax', //csrf
-                secure: __prod__,
+                secure: __prod__, 
+                domain: __prod__ ? 'codepondr.com' : undefined
             },
             secret: REDIS_SECRET,
             resave: false,
@@ -80,7 +83,7 @@ const main = async () => {
         cors: false
     })
 
-    server.listen(4000, () => {
+    server.listen(PORT, () => {
         console.log('Server set up on localhost:4000')
     })
 }
